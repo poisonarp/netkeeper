@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    image: netkeeper-app
+    ports:
+      - "3001:3001"
+    # No environment variables required
+    # Uncomment if you want to mount local code for development
+    # volumes:
+    #   - .:/app

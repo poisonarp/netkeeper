@@ -1,0 +1,5 @@
+{
+  "name": "NetKeeper Pro",
+  "description": "A comprehensive, self-hosted network documentation and management suite featuring IPAM, VLAN tracking, NAT mapping, and detailed infrastructure documentation.",
+  "requestFramePermissions": []
+}
