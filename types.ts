@@ -1,6 +1,7 @@
 export enum View {
   DASHBOARD = 'DASHBOARD',
   IPAM = 'IPAM',
+  IP_SCAN = 'IP_SCAN',
   VLAN = 'VLAN',
   NAT = 'NAT',
   WIFI = 'WIFI',
@@ -44,6 +45,7 @@ export interface IPAddress {
   mac: string;
   status: 'active' | 'reserved' | 'static' | 'dhcp';
   owner: string;
+  notes?: string;
   isOnline?: boolean;
   lastChecked?: string;
 }

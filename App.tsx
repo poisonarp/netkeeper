@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar.tsx';
 import Header from './components/Header.tsx';
 import Dashboard from './components/Dashboard.tsx';
 import IPAMView from './components/IPAMView.tsx';
+import IPScanView from './components/IPScanView.tsx';
 import VLANView from './components/VLANView.tsx';
 import NATView from './components/NATView.tsx';
 import WiFiView from './components/WiFiView.tsx';
@@ -150,6 +151,8 @@ const App: React.FC = () => {
         return <Dashboard subnets={subnets} vlans={vlans} natRules={natRules} />;
       case View.IPAM:
         return <IPAMView subnets={subnets} setSubnets={setSubnets} ipAddresses={ipAddresses} setIpAddresses={setIpAddresses} />;
+      case View.IP_SCAN:
+        return <IPScanView subnets={subnets} setSubnets={setSubnets} ipAddresses={ipAddresses} setIpAddresses={setIpAddresses} />;
       case View.VLAN:
         return <VLANView subnets={subnets} />;
       case View.NAT:
@@ -157,7 +160,7 @@ const App: React.FC = () => {
       case View.WIFI:
         return <WiFiView wifiNetworks={wifiNetworks} setWifiNetworks={setWifiNetworks} />;
       case View.DIAGRAM:
-        return <DiagramView subnets={subnets} />;
+        return <DiagramView subnets={subnets} ipAddresses={ipAddresses} />;
       case View.DOCS:
         return <DocsView />;
       case View.APPLICATIONS:

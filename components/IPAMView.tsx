@@ -14,13 +14,14 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
   const [isAddingIp, setIsAddingIp] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [editSubnetId, setEditSubnetId] = useState<string | null>(null);
+  const [editIpId, setEditIpId] = useState<string | null>(null);
   
   const [newSubnet, setNewSubnet] = useState<Partial<Subnet>>({
     name: '', cidr: '', gateway: '', description: '', vlanId: '', dhcpEnabled: false, dhcpStart: '', dhcpEnd: ''
   });
 
   const [newIp, setNewIp] = useState<Partial<IPAddress>>({
-    address: '', hostname: '', mac: '', status: 'active', owner: ''
+    address: '', hostname: '', mac: '', status: 'active', owner: '', notes: ''
   });
 
   const selectedSubnet = subnets.find(s => s.id === selectedSubnetId);
@@ -100,22 +101,55 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
 
   const handleAddIp = () => {
     if (selectedSubnetId && newIp.address && newIp.hostname) {
-      const added: IPAddress = {
-        id: Math.random().toString(36).substr(2, 9),
-        subnetId: selectedSubnetId,
-        address: newIp.address || '',
-        hostname: newIp.hostname || '',
-        mac: newIp.mac || '',
-        status: (newIp.status as any) || 'active',
-        owner: newIp.owner || '',
-        isOnline: true,
-        lastChecked: new Date().toLocaleTimeString()
-      };
-      setIpAddresses([...ipAddresses, added]);
-      setSubnets(subnets.map(s => s.id === selectedSubnetId ? { ...s, usedIps: s.usedIps + 1 } : s));
-      setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '' });
+      if (editIpId) {
+        // Update existing device
+        setIpAddresses(ipAddresses.map(ip => 
+          ip.id === editIpId 
+            ? { 
+                ...ip, 
+                address: newIp.address || ip.address,
+                hostname: newIp.hostname || ip.hostname,
+                mac: newIp.mac || ip.mac,
+                status: (newIp.status as any) || ip.status,
+                owner: newIp.owner || ip.owner,
+                notes: newIp.notes || ip.notes
+              }
+            : ip
+        ));
+        setEditIpId(null);
+      } else {
+        // Add new device
+        const added: IPAddress = {
+          id: Math.random().toString(36).substr(2, 9),
+          subnetId: selectedSubnetId,
+          address: newIp.address || '',
+          hostname: newIp.hostname || '',
+          mac: newIp.mac || '',
+          status: (newIp.status as any) || 'active',
+          owner: newIp.owner || '',
+          notes: newIp.notes || '',
+          isOnline: true,
+          lastChecked: new Date().toLocaleTimeString()
+        };
+        setIpAddresses([...ipAddresses, added]);
+        setSubnets(subnets.map(s => s.id === selectedSubnetId ? { ...s, usedIps: s.usedIps + 1 } : s));
+      }
+      setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '' });
       setIsAddingIp(false);
     }
+  };
+
+  const handleEditIp = (ip: IPAddress) => {
+    setNewIp({
+      address: ip.address,
+      hostname: ip.hostname,
+      mac: ip.mac,
+      status: ip.status,
+      owner: ip.owner || '',
+      notes: ip.notes || ''
+    });
+    setEditIpId(ip.id);
+    setIsAddingIp(true);
   };
 
   const deleteSubnet = (id: string, e: React.MouseEvent) => {
@@ -191,7 +225,7 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
 
         {isAddingIp && (
           <div className="bg-slate-900/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-slate-800 animate-in slide-in-from-top duration-300">
-            <h3 className="text-xl font-extrabold mb-4 text-slate-100 drop-shadow">Register New Device</h3>
+            <h3 className="text-xl font-extrabold mb-4 text-slate-100 drop-shadow">{editIpId ? 'Edit Device' : 'Register New Device'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-2">IP Address</label>
@@ -227,9 +261,19 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
                 </select>
               </div>
             </div>
+            <div className="mt-6">
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Notes</label>
+              <textarea
+                value={newIp.notes || ''}
+                onChange={e => setNewIp({...newIp, notes: e.target.value})}
+                placeholder="Optional notes about this device..."
+                rows={3}
+                className="w-full px-5 py-3 bg-slate-800 border border-slate-700 text-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-slate-600 resize-none"
+              />
+            </div>
             <div className="mt-8 flex justify-end space-x-4">
-              <button onClick={() => setIsAddingIp(false)} className="px-5 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-800 transition-all">Cancel</button>
-              <button onClick={handleAddIp} className="px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:from-blue-600 hover:to-cyan-600 transition-all">Confirm</button>
+              <button onClick={() => { setIsAddingIp(false); setEditIpId(null); setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '' }); }} className="px-5 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-800 transition-all">Cancel</button>
+              <button onClick={handleAddIp} className="px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:from-blue-600 hover:to-cyan-600 transition-all">{editIpId ? 'Update' : 'Confirm'}</button>
             </div>
           </div>
         )}
@@ -243,6 +287,7 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
                 <th className="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-wider">IP Address</th>
                 <th className="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-wider">MAC Address</th>
                 <th className="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-wider">Assignment</th>
+                <th className="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-wider">Notes</th>
                 <th className="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-wider">Last Seen</th>
                 <th className="px-6 py-5 text-xs font-extrabold text-slate-400 uppercase tracking-wider"></th>
               </tr>
@@ -281,16 +326,29 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
                       {ip.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-sm text-slate-400 max-w-xs truncate" title={ip.notes || ''}>
+                    {ip.notes || '-'}
+                  </td>
                   <td className="px-6 py-4 text-xs text-slate-500 italic">
                     {ip.lastChecked ? ip.lastChecked : 'Never'}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => deleteIp(ip.id)}
-                      className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
+                    <div className="flex items-center justify-end space-x-2">
+                      <button 
+                        onClick={() => handleEditIp(ip)}
+                        className="p-2 text-slate-600 hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-all"
+                        title="Edit device"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                      <button 
+                        onClick={() => deleteIp(ip.id)}
+                        className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                        title="Delete device"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
