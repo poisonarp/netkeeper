@@ -17,7 +17,6 @@ interface ScannedDevice {
 
 const IPScanView: React.FC<IPScanViewProps> = ({ subnets, setSubnets, ipAddresses, setIpAddresses }) => {
   const [selectedSubnetId, setSelectedSubnetId] = useState<string>('');
-  const [customCidr, setCustomCidr] = useState<string>('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScannedDevice[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
@@ -26,12 +25,12 @@ const IPScanView: React.FC<IPScanViewProps> = ({ subnets, setSubnets, ipAddresse
   const selectedSubnet = subnets.find(s => s.id === selectedSubnetId);
 
   const handleScan = async () => {
-    const cidrToScan = selectedSubnetId ? selectedSubnet?.cidr : customCidr;
-    
-    if (!cidrToScan) {
-      alert('Please select a subnet or enter a CIDR range');
+    if (!selectedSubnetId || !selectedSubnet) {
+      alert('Please select a subnet');
       return;
     }
+    
+    const cidrToScan = selectedSubnet.cidr;
 
     setIsScanning(true);
     setScanResults([]);
@@ -163,47 +162,27 @@ const IPScanView: React.FC<IPScanViewProps> = ({ subnets, setSubnets, ipAddresse
       <div className="bg-slate-900/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-slate-800">
         <h3 className="text-xl font-extrabold mb-6 text-slate-100 drop-shadow">Scan Configuration</h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Select Subnet</label>
-            <select
-              value={selectedSubnetId}
-              onChange={(e) => {
-                setSelectedSubnetId(e.target.value);
-                setCustomCidr('');
-              }}
-              className="w-full px-5 py-3 bg-slate-800 border border-slate-700 text-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-            >
-              <option value="">-- Select a subnet --</option>
-              {subnets.map(subnet => (
-                <option key={subnet.id} value={subnet.id}>
-                  {subnet.name} ({subnet.cidr})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Or Enter Custom CIDR</label>
-            <input
-              type="text"
-              value={customCidr}
-              onChange={(e) => {
-                setCustomCidr(e.target.value);
-                setSelectedSubnetId('');
-              }}
-              placeholder="e.g. 192.168.1.0/24"
-              className="w-full px-5 py-3 bg-slate-800 border border-slate-700 text-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-slate-600"
-              disabled={!!selectedSubnetId}
-            />
-          </div>
+        <div className="mb-6">
+          <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Select Subnet</label>
+          <select
+            value={selectedSubnetId}
+            onChange={(e) => setSelectedSubnetId(e.target.value)}
+            className="w-full px-5 py-3 bg-slate-800 border border-slate-700 text-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          >
+            <option value="">-- Select a subnet --</option>
+            {subnets.map(subnet => (
+              <option key={subnet.id} value={subnet.id}>
+                {subnet.name} ({subnet.cidr})
+              </option>
+            ))}
+          </select>
         </div>
 
         <button
           onClick={handleScan}
-          disabled={isScanning || (!selectedSubnetId && !customCidr)}
+          disabled={isScanning || !selectedSubnetId}
           className={`px-6 py-3 rounded-2xl flex items-center space-x-3 font-bold shadow-lg transition-all text-base ${
-            isScanning || (!selectedSubnetId && !customCidr)
+            isScanning || !selectedSubnetId
               ? 'bg-slate-800/60 text-slate-400 cursor-not-allowed border-2 border-slate-700'
               : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-blue-600 hover:to-cyan-600'
           }`}

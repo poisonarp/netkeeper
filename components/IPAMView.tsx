@@ -21,7 +21,7 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
   });
 
   const [newIp, setNewIp] = useState<Partial<IPAddress>>({
-    address: '', hostname: '', mac: '', status: 'active', owner: '', notes: ''
+    address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '', monitorEnabled: false
   });
 
   const selectedSubnet = subnets.find(s => s.id === selectedSubnetId);
@@ -112,7 +112,8 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
                 mac: newIp.mac || ip.mac,
                 status: (newIp.status as any) || ip.status,
                 owner: newIp.owner || ip.owner,
-                notes: newIp.notes || ip.notes
+                notes: newIp.notes || ip.notes,
+                monitorEnabled: newIp.monitorEnabled !== undefined ? newIp.monitorEnabled : ip.monitorEnabled
               }
             : ip
         ));
@@ -129,12 +130,13 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
           owner: newIp.owner || '',
           notes: newIp.notes || '',
           isOnline: true,
-          lastChecked: new Date().toLocaleTimeString()
+          lastChecked: new Date().toLocaleTimeString(),
+          monitorEnabled: newIp.monitorEnabled || false
         };
         setIpAddresses([...ipAddresses, added]);
         setSubnets(subnets.map(s => s.id === selectedSubnetId ? { ...s, usedIps: s.usedIps + 1 } : s));
       }
-      setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '' });
+      setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '', monitorEnabled: false });
       setIsAddingIp(false);
     }
   };
@@ -146,7 +148,8 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
       mac: ip.mac,
       status: ip.status,
       owner: ip.owner || '',
-      notes: ip.notes || ''
+      notes: ip.notes || '',
+      monitorEnabled: ip.monitorEnabled || false
     });
     setEditIpId(ip.id);
     setIsAddingIp(true);
@@ -271,8 +274,27 @@ const IPAMView: React.FC<IPAMViewProps> = ({ subnets, setSubnets, ipAddresses, s
                 className="w-full px-5 py-3 bg-slate-800 border border-slate-700 text-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-slate-600 resize-none"
               />
             </div>
+            <div className="mt-6 bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <label className="text-sm font-bold text-slate-100">Monitor Device</label>
+                  </div>
+                  <p className="text-xs text-slate-400">Ping this device every 3 minutes and notify if offline</p>
+                </div>
+                <button 
+                  onClick={() => setNewIp({...newIp, monitorEnabled: !newIp.monitorEnabled})}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${newIp.monitorEnabled ? 'bg-cyan-500' : 'bg-slate-700'}`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-lg ${newIp.monitorEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            </div>
             <div className="mt-8 flex justify-end space-x-4">
-              <button onClick={() => { setIsAddingIp(false); setEditIpId(null); setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '' }); }} className="px-5 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-800 transition-all">Cancel</button>
+              <button onClick={() => { setIsAddingIp(false); setEditIpId(null); setNewIp({ address: '', hostname: '', mac: '', status: 'active', owner: '', notes: '', monitorEnabled: false }); }} className="px-5 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-800 transition-all">Cancel</button>
               <button onClick={handleAddIp} className="px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:from-blue-600 hover:to-cyan-600 transition-all">{editIpId ? 'Update' : 'Confirm'}</button>
             </div>
           </div>
